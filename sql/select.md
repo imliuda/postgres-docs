@@ -82,4 +82,51 @@ SELECT用于从0个或多个表中检索数据。SELECT语句的处理流程如�
 
 ### WITH从句
 
-WITH从句允许你指定一个或多个子查询，在主查询中可以通过名称来引用这些子查询。在主查询语句执行的过程中，这些字查询作为临时的表或视图存在。每个子查询可以是SELECT，TABLE，VALUES，INSERT，UPDATE或者DELETE语句。当WITH从句是修改数据的语句，通常会着一个RETURNING从句。
+WITH从句允许你指定一个或多个子查询，在主查询中可以通过名称来引用这些子查询。在主查询语句执行的过程中，这些字查询作为临时的表或视图存在。每个子查询可以是SELECT，TABLE，VALUES，INSERT，UPDATE或者DELETE语句。当WITH从句是修改数据的语句，通常会着一个RETURNING从句，返回的是RETURNING的返回，并不是WITH从句修改的这个表的返回。如果省略了RETURNING，语句仍然会执行，但不会产生任何输出，所以在主查询中不能应用这个临时表。
+
+对于每个WITH从句，必须要指定一个名称（非schema限定的表）。然后可以指定一些列可选的列名称，如果省略，列名则由子查询自动推断。
+
+如果指定了RECURSIVE，则允许SELECT子查询通过名称来引用自己，这样的子查询必须是下面的这种形式：
+
+```
+non_recursive_term UNION [ ALL | DISTINCT ] recursive_term
+```
+
+对自身的递归引用必须位于UNION的右侧，每个子查询只能对自身进行一次递归引用，不支持递归修改数据，但是可以在修改语句中使用递归子查询的结果。参考7.8节中的示例。
+
+RECURSIVE的另一个影响是，WITH子查询语句不必按顺序书写：一个子查询语句可以引用该语句后面的子查询（但是，环形引用或互相引用是为实现的）。若未指定RECURSIVE，则WITH子查询语句只能引用该语句之前的子查询。
+
+WITH查询的特性在于，在主查询执行的过程中，他们只进行一次求值，即使主查询中多次引用了子查询。特别的是，对于修改数据的子查询，能够保证他们只执行一次。不管主查询中读取了全部或任何子查询的输出。
+
+主查询和WITH查询是同时执的（概念上的）。WITH查询中修改数据语句产生的效果对于查询中的其他部分是不可见的。而不是读取读取RETURNING的输出。如果两个子查询同时修改同一行数据，结果时不可预料的。
+
+参考7.8节获取额外信息。
+
+### FROM从句
+
+FROM为SELECT指定一个和多个表，如果指定了多个表，则结果是所有表的卡迪尔积（cross join）。通常，会加上一些限定条件（通过where）来获取卡迪尔积中一小部分子集。
+
+FROM从句可以包含下列元素：
+
+***table_name***
+
+一个已经存在的数据表或试图的名称（可通过schema限定）。如果表名前指定了ONLY，则只有这个表会被扫描，如果未指定ONLY，则该表和所有的派生表（如果有）会被扫描。可选的，如果表名后面指定了\*，则明确指示包含所有的派生表。
+
+***alias***
+
+FROM元素的替代名称。别名用来保持语句的简洁或者消除自连接（self-join，同一个表会被多次扫描）的歧义。通过别名，可以完全隐藏表或函数的真是名称。例如 FROM foo AS f，SELECT语句的其他部分必须通过f来引用这个FROM元素，而不是foo。如果指定了别名，还可以指定一个列的别名列表，作为表的列名的替换。
+
+TABLESAMPLE ***sampling_method*** ( ***argument*** [, ...] ) [ REPEATABLE ( ***seed*** ) ]
+
+表名后的TABLESAMPLE从句用来指示，要采用指定的sampling_method获取表中数据行的一个子集。抽样会在任何其他过滤器之前进行，例如WHERE。标准的PostgreSQL发行版提供了两个抽样方法BERNOULLI和SYSTEM，其他的抽样方法可以通过数据库的扩展进行安装。
+
+BERNOULLI和SYSTEM抽样方法都接受一个argument参数，是一个小数表示的对标进行的采样率，表示为0-100之间的百分比，该参数可以是任何实数类型的表达式（别的抽样方法可能接受多个或不同参数）。这两个方法返回随机选取的样本，样本的数量和总数的比值近似于参数中指定的百分比。The BERNOULLI method scans the whole table and selects or ignores individual rows independently with the specified probability. The SYSTEM method does block-level sampling with each block having the specified chance of being selected; all rows in each selected block are returned. The SYSTEM method is significantly faster than the BERNOULLI method when small sampling percentages are specified, but it may return a less-random sample of the table as a result of clustering effects.
+
+The optional REPEATABLE clause specifies a seed number or expression to use for generating random numbers within the sampling method. The seed value can be any non-null floating-point value. Two queries that specify the same seed and argument values will select the same sample of the table, if the table has not been changed meanwhile. But different seed values will usually produce different samples. If REPEATABLE is not given then a new random sample is selected for each query, based upon a system-generated seed. Note that some add-on sampling methods do not accept REPEATABLE, and will always produce new samples on each use.
+
+***select***
+
+FROM从句中可以包含子SELECT语句。表现行为是，就像是在SELECT的执行过程中，通过子查询的输出创建了一个临时的表。注意，子SELECT语句必须用括号括起来，并且要为之提供一个别名。也可以在这里使用VALUE指令。
+
+***with_query_name***
+
