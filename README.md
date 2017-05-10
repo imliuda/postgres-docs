@@ -9,10 +9,10 @@
  - 更多信息
  - BUG报告指南
 
-I. 教程
- - 1.[开始]()
- - 2.[SQL语言]()
- - 3.高级特性
+I. [教程](tutorial/README.md)
+ - 1.[开始](tutorial/start.md)
+ - 2.[SQL语言](tutorial/sql.md)
+ - 3.[高级特性](tutorial/advanced.md)
 
 II. SQL语言
  - 4.SQL语法
