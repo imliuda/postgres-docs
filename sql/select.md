@@ -158,4 +158,55 @@ FROM从句中可以使用函数调用（可以使用任何函数，对于能够�
 
 对于INNER和OUTER连接类型，必须指定连接条件，且必须是NATURAL，ON join_condition或者USING (join_column [, ...])其中之一。解释参考下面，对于 CROSS JOIN，则不允许出现这些从句。
 
-JOIN从句连接两个FROM元素，为简明起见，我们先把FROM元素叫做表，尽管，他们可能为任一类型的FROM元素。必要时，使用括号来决定嵌套顺序。
+JOIN从句连接两个FROM元素，为简明起见，我们先把FROM元素叫做表，尽管，他们可能为任一类型的FROM元素。必要时，使用括号来决定嵌套顺序。如果省略了括号，将会已从左向右的方式连接。任何情况下，JOIN都要比用逗号分隔的FROM元素具有更高的组合优先级。
+
+CROSS JOIN和INNER JOIN产生相同的卡迪尔积，对于在顶层的FROM后面的两个表，将会得到相同的结果，但是受限于连接条件（如果有的话）。CROSS JOIN和INNER JOIN ON (TRUE)是等同的，也就是说，没有数据行会在结果中移除。这两个JOIN类型只是为了方便起见，因为你用普通的FROM和WHERE不能做的，这两种JOIN也做不到。
+
+LEFT OUTER JOIN返回受约束的卡迪尔积（例如，所有满足连接条件的数据行），加上所有左边表中有，而右边表中没有的数据行。左边的表的宽度被扩展成连接后表的完整的宽度，对于右边没有数据的列，采用null进行填充（译注：两张表连接后列的宽度肯定大与原来任何一张表列的宽度，对于左边的表中有满足条件的数据行，而而右边没有的，就采用null填充本来应该属于右边表的数据）。注意，当决定哪数据行是否满足连接条件时，仅仅使用JOIN从句自身设定的条件。外部的条件在此之后才被应用。
+
+相反，RIGHT OUTER JOIN返回所有连接的行，加上右边表中所有不匹配的行（左边没有数据的行用null填充）。这仅仅是方便，因为你可以通过调整表的先后位置将其转换为一个LEFT OUTER JOIN。
+
+FULL OUTER JOIN返回所有连接的行，加上所有左边在右边没有匹配的行（右边用null填充），加上所有右边在左边没有匹配的行（左边用null填充）。
+
+ON ***join_condition***
+
+join_condition是一个值为boolean类型的表达式（类似于WHERE从句），来限定哪些行是匹配的。
+
+USING ( join_column [, ...] )
+
+USING ( a, b, ... )是ON left_table.a = right_table.a AND left_table.b = right_table.b ...的简写形式。USING也暗指每一个等同的列对在输出中值输出一次，而不是两次。
+
+***NATURAL***
+
+NATURAL是USING的简写形式，如果USING列表包含了所有在左右两个表中名称相同的列。
+
+***LATERAL***
+
+The LATERAL key word can precede a sub-SELECT FROM item. This allows the sub-SELECT to refer to columns of FROM items that appear before it in the FROM list. (Without LATERAL, each sub-SELECT is evaluated independently and so cannot cross-reference any other FROM item.)
+
+LATERAL can also precede a function-call FROM item, but in this case it is a noise word, because the function expression can refer to earlier FROM items in any case.
+
+A LATERAL item can appear at top level in the FROM list, or within a JOIN tree. In the latter case it can also refer to any items that are on the left-hand side of a JOIN that it is on the right-hand side of.
+
+When a FROM item contains LATERAL cross-references, evaluation proceeds as follows: for each row of the FROM item providing the cross-referenced column(s), or set of rows of multiple FROM items providing the columns, the LATERAL item is evaluated using that row or row set's values of the columns. The resulting row(s) are joined as usual with the rows they were computed from. This is repeated for each row or set of rows from the column source table(s).
+
+The column source table(s) must be INNER or LEFT joined to the LATERAL item, else there would not be a well-defined set of rows from which to compute each set of rows for the LATERAL item. Thus, although a construct such as X RIGHT JOIN LATERAL Y is syntactically valid, it is not actually allowed for Y to reference X.
+
+***WHERE从句***
+
+可选的WHERE从句有如下形式：
+
+```
+WHERE condition
+```
+
+where condition可以是任何计算结果为boolean的表达式。任何不满足这个条件的行都会在输出中移除。当用某行中的真实数据替换表达式中的变量引用后，如果该表达式求值为true，那么这行就是满足条件的。
+
+***GROUP BY从句***
+
+GROUP BY从句有如下形式：
+
+```
+GROUP BY grouping_element [, ...]
+```
+
