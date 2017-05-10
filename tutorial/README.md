@@ -18,7 +18,7 @@
   - 2.4.[添加数据](populate.md)
   - 2.5.[查询表](select.md)
   - 2.6.[连接表](join.md)
-  - 2.7.[聚合函数](agg.md)
+  - 2.7.[聚合函数](agg.md)
   - 2.8.[更新](update.md)
   - 2.9.[删除](delete.md)
 - 3.[高级特性](advanced.md)
