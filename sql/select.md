@@ -168,7 +168,7 @@ LEFT OUTER JOIN返回受约束的卡迪尔积（例如，所有满足连接条�
 
 FULL OUTER JOIN返回所有连接的行，加上所有左边在右边没有匹配的行（右边用null填充），加上所有右边在左边没有匹配的行（左边用null填充）。
 
-ON ***join_condition***
+ON join_condition
 
 join_condition是一个值为boolean类型的表达式（类似于WHERE从句），来限定哪些行是匹配的。
 
@@ -176,11 +176,11 @@ USING ( join_column [, ...] )
 
 USING ( a, b, ... )是ON left_table.a = right_table.a AND left_table.b = right_table.b ...的简写形式。USING也暗指每一个等同的列对在输出中值输出一次，而不是两次。
 
-***NATURAL***
+NATURAL
 
 NATURAL是USING的简写形式，如果USING列表包含了所有在左右两个表中名称相同的列。
 
-***LATERAL***
+LATERAL
 
 The LATERAL key word can precede a sub-SELECT FROM item. This allows the sub-SELECT to refer to columns of FROM items that appear before it in the FROM list. (Without LATERAL, each sub-SELECT is evaluated independently and so cannot cross-reference any other FROM item.)
 
@@ -210,3 +210,30 @@ GROUP BY从句有如下形式：
 GROUP BY grouping_element [, ...]
 ```
 
+GROUP BY会把所有拥有共同分组表达式值的行压缩成一行。grouping_element中的表达式可以为输入列名，输出列名或序号，或者是由输入列值组成的表达式。为避免歧义，GROUP BY名称会被解释为输入列名，而不是输出列名。
+
+If any of GROUPING SETS, ROLLUP or CUBE are present as grouping elements, then the GROUP BY clause as a whole defines some number of independent grouping sets. The effect of this is equivalent to constructing a UNION ALL between subqueries with the individual grouping sets as their GROUP BY clauses. For further details on the handling of grouping sets see Section 7.2.4.
+
+如果使用了聚合函数，每个分组中的所有列都会被计算，为每个分组产生一个独立的值（如果有聚合函数，但是没有GROUP BY从句，整个查询将作为一个包含所有数据行的单一分组）。可以通过聚合函数后的FILTER从句，对提供给聚合函数的分组数据行的集合进行过滤。参考4.2.7获取更多信息。如果FILTER从句存在，只有满足过滤条件的行会传入到聚合函数中。
+
+当GROUP BY从句存在，或者使用了任一聚合函数，在SELECT列表中引用未分组的列是非法的，除了在聚合函数中，或未分组的列独立于分组的列，since there would otherwise be more than one possible value to return for an ungrouped column. A functional dependency exists if the grouped columns (or a subset thereof) are the primary key of the table containing the ungrouped column.
+
+请记住，所有的聚合函数在任何HAVING从句中或SELECT列表中的标量（scalar）表达式之前求值。这意味着，例如，不能使用CASE表达式跳过聚合函数的求值。
+
+目前，有GROUP BY从句的话，不能使用FOR NO KEY UPDATE，FOR UPDATE，FOR SHARE和FOR KEY SHARE。
+
+***HAVING从句***
+
+可选的HAVING表达式具有如下形式：
+
+```
+HAVING condition
+```
+
+condition和WHERE从句中的相同。
+
+HAVING移除不满足条件的分组数据行。HAVING和WHERE不同：WHERE在GROUP BY之前对独立的数据行过滤，而HAVING对GROUP BY创建的分组数据行进行过滤。condition中引用的每一列必须引用被分组的列，除非引用的是聚合函数中的列，或非分组的列功能上和分组的列是独立的。
+
+HAVING从句会把查询变成带分组的查询，即使查询中没有GROUP BY从句。这和查询中包含聚合函数但没有GROUP BY时的情况是一样的。所有选中的数据行看做为一个单一的分组，SELECT列表和HAVING从句只能引用聚合函数中的的列。如果HAVING条件为真的话，这样的查询会产生单一行，否则，产生0行。
+
+目前，有HAVING从句的话，不能使用 FOR NO KEY UPDATE，FOR UPDATE，FOR SHARE和FOR KEY SHARE。
