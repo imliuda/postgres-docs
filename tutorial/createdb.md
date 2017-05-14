@@ -45,7 +45,7 @@ createdb: could not connect to database postgres: FATAL:  role "joe" does not ex
 ```
 createdb: database creation failed: ERROR:  permission denied to create database
 ```
-不是每个用户都可以创建新的数据库。如果PostgreSQL拒绝为你创建新用户，你需要站点管理员提升你的权限来创建数据库。如果是自己安装的PostgreSQL，你应该使用启动数据库服务的用户的身份进行登录。<a id="AEN469" href="FTN.AEN469">[1]</a>
+不是每个用户都可以创建新的数据库。如果PostgreSQL拒绝为你创建新用户，你需要站点管理员提升你的权限来创建数据库。如果是自己安装的PostgreSQL，你应该使用启动数据库服务的用户的身份进行登录。<a id="AEN469" href="#FTN.AEN469">[1]</a>
 
 你也可以用其他用户名创建数据库。在一个站点上，PostgreSQL允许你创建任意数量的数据库。数据库名称必须以字母开头，别切长度不能超过63个字节。一个方便的选择是创建和你登录用户名相同的数据库。许多工具会假定你的登录用户名就是数据库名，所以，你可以减少一些输入。如果要创建这样的数据库，只需简单的数据：
 
