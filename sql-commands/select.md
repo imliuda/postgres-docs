@@ -168,19 +168,19 @@ LEFT OUTER JOIN返回受约束的卡迪尔积（例如，所有满足连接条�
 
 FULL OUTER JOIN返回所有连接的行，加上所有左边在右边没有匹配的行（右边用null填充），加上所有右边在左边没有匹配的行（左边用null填充）。
 
-ON join_condition
+*ON join_condition*
 
 join_condition是一个值为boolean类型的表达式（类似于WHERE从句），来限定哪些行是匹配的。
 
-USING ( join_column [, ...] )
+*USING ( join_column [, ...] )*
 
 USING ( a, b, ... )是ON left_table.a = right_table.a AND left_table.b = right_table.b ...的简写形式。USING也暗指每一个等同的列对在输出中值输出一次，而不是两次。
 
-NATURAL
+*NATURAL*
 
 NATURAL是USING的简写形式，如果USING列表包含了所有在左右两个表中名称相同的列。
 
-LATERAL
+*LATERAL*
 
 The LATERAL key word can precede a sub-SELECT FROM item. This allows the sub-SELECT to refer to columns of FROM items that appear before it in the FROM list. (Without LATERAL, each sub-SELECT is evaluated independently and so cannot cross-reference any other FROM item.)
 
